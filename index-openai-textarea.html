@@ -419,6 +419,71 @@
                 transform: scale(1.5);
             }
         }
+
+        .scroll-to-bottom-btn {
+            position: fixed;
+            bottom: 140px;
+            right: 30px;
+            width: 40px;
+            height: 40px;
+            background: #007bff;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            border: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+        }
+
+        .scroll-to-bottom-btn:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        .scroll-to-bottom-btn.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .coming-soon-alert {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.7s ease;
+            z-index: 2000;
+            pointer-events: none;
+        }
+
+        .coming-soon-alert.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%, -55%);
+        }
+
+        .sign-in-btn:active {
+            transform: scale(0.98);
+            /* Add transition to base state */
+            transition: all 0.2s ease;
+        }
+
+        /* Add this to make the button interactive even when not active */
+        .sign-in-btn {
+            transition: all 0.7s ease;
+        }
     </style>
 </head>
 
@@ -458,7 +523,11 @@
             <button class="send-button" onclick="handleSendMessage()">Send</button>
         </div>
     </div>
-
+    <div class="scroll-to-bottom-btn" id="scrollToBottomBtn" title="Jump to latest message">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+            <path fill="currentColor" d="M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z" />
+        </svg>
+    </div>
     <footer>
         <p>© 2024 Chat Interface. All rights reserved.</p>
     </footer>
@@ -696,6 +765,7 @@
             } else {
                 inputContainer.classList.remove('initial');
             }
+            scrollToBottomBtn.classList.remove('visible');
         }
 
 
@@ -707,8 +777,48 @@
             }
         });
 
+        const scrollToBottomBtn = document.getElementById('scrollToBottomBtn');
+        const chatMessages = document.getElementById('chatMessages');
+
+        // Scroll event listener
+        chatMessages.addEventListener('scroll', function () {
+            const isAtBottom = chatMessages.scrollHeight - chatMessages.clientHeight <= chatMessages.scrollTop + 1;
+            scrollToBottomBtn.classList.toggle('visible', !isAtBottom);
+        });
+
+        // Click handler for scroll button
+        scrollToBottomBtn.addEventListener('click', () => {
+            chatMessages.scrollTo({
+                top: chatMessages.scrollHeight,
+                behavior: 'smooth'
+            });
+        });
+
+        // Add this at the bottom of your existing <script> section
+        document.querySelector('.sign-in-btn').addEventListener('click', function (e) {
+            e.preventDefault();
+
+            // Create or reuse notification element
+            let alertDiv = document.querySelector('.coming-soon-alert');
+            if (!alertDiv) {
+                alertDiv = document.createElement('div');
+                alertDiv.className = 'coming-soon-alert';
+                alertDiv.textContent = 'Sign In feature coming soon!';
+                document.body.appendChild(alertDiv);
+            }
+
+            // Show notification
+            alertDiv.classList.add('show');
+
+            // Hide after 2 seconds
+            setTimeout(() => {
+                alertDiv.classList.remove('show');
+            }, 2000);
+        });
+
         renderChat();
     </script>
+
 </body>
 
 </html>
