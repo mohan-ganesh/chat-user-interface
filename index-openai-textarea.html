@@ -190,7 +190,7 @@
             left: 0;
             right: 0;
             z-index: 90;
-            border-top: 1px solid #e0e0e0;
+            border-top: 0px solid #e0e0e0;
         }
 
         .message {
@@ -492,8 +492,7 @@
     <header>
         <div class="header-content">
             <div class="header-left">
-                <img src="https://test.conversation.goengen.com/assets/engen-fullcolor-horizontal.png" alt="Engen Logo"
-                    class="header-logo" />
+                <img src="" alt="Engen Logo" class="header-logo" />
             </div>
             <div class="header-center">
                 <h2 class="header-title">Knowledge Management</h2>
@@ -533,6 +532,10 @@
     </footer>
 
     <script>
+        function getDomain() {
+            return atob("aHR0cHM6Ly90ZXN0LmNvbnZlcnNhdGlvbi5nb2VuZ2VuLmNvbQ==");
+        }
+        const DOMAIN = atob("aHR0cHM6Ly90ZXN0LmNvbnZlcnNhdGlvbi5nb2VuZ2VuLmNvbQ==");
         let messages = [];
         let currentSession = sessionStorage.getItem('chatSession') || null;
 
@@ -565,7 +568,7 @@
                 };
                 console.log(requestBody);
                 const response = await fetch(
-                    'https://test.conversation.goengen.com/code-translate/v1alpha/data-discovery/prompt',
+                    `${DOMAIN}/code-translate/v1alpha/data-discovery/prompt`,
                     {
                         method: 'POST',
                         headers: {
@@ -815,7 +818,8 @@
                 alertDiv.classList.remove('show');
             }, 2000);
         });
-
+        // Add this in your initialization code (e.g., at the end of the script)
+        document.querySelector('.header-logo').src = `${getDomain()}/assets/engen-fullcolor-horizontal.png`;
         renderChat();
     </script>
 
