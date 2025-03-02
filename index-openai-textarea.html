@@ -153,11 +153,12 @@
             max-height: 150px;
             overflow-y: auto;
             transition: all 0.2s;
+            background-color: rgb(243, 244, 246);
         }
 
         .message-input:focus {
-            border-color: #eceff2;
-            box-shadow: 0 0 0 3px rgba(183, 200, 219, 0.1);
+            border-color: #b6b7b8;
+            box-shadow: 0 0 0 2px rgb(243, 244, 246);
         }
 
         .send-button {
@@ -422,6 +423,7 @@
 </head>
 
 <body>
+
     <header>
         <div class="header-content">
             <div class="header-left">
@@ -695,6 +697,8 @@
                 inputContainer.classList.remove('initial');
             }
         }
+
+
 
         document.getElementById('userInput').addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
