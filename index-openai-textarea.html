@@ -210,6 +210,7 @@
             background: #f1f3f4;
             color: #202124;
             align-self: flex-start;
+            padding-bottom: 16px;
         }
 
         button {
@@ -226,10 +227,8 @@
         }
 
         .related-questions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 12px;
+            margin-top: 8px;
+            width: 100%;
         }
 
         .related-question-btn {
@@ -243,19 +242,16 @@
             transition: background 0.2s;
         }
 
+        .copy-container {
+            display: flex;
+            justify-content: flex-start;
+            width: 100%;
+            margin-top: 8px;
+        }
+
         .copy-button {
-            background: none;
-            border: none;
-            color: #1967d2;
-            cursor: pointer;
-            padding: 4px 8px;
-            margin-left: 8px;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            font-size: 0.9em;
-            border-radius: 4px;
-            transition: background 0.2s;
+            margin-left: 0;
+            align-self: flex-start;
         }
 
         .copy-button:hover {
@@ -638,35 +634,43 @@
                 const messageDiv = document.createElement('div');
                 messageDiv.className = `message ${msg.type}-message`;
 
+                // Main content container
                 const contentWrapper = document.createElement('div');
                 contentWrapper.style.display = 'flex';
-                contentWrapper.style.alignItems = 'center';
-                contentWrapper.style.justifyContent = 'space-between';
-                contentWrapper.style.flexWrap = 'wrap';
+                contentWrapper.style.flexDirection = 'column';
+                contentWrapper.style.gap = '8px';
 
+                // Text content
                 const textElement = document.createElement('div');
                 textElement.style.whiteSpace = 'pre-wrap';
                 textElement.style.overflowWrap = 'break-word';
-                // Allow text element to take available space and wrap if needed
                 textElement.style.flex = '1 1 auto';
 
-                // For bot messages, convert markdown to HTML before rendering.
                 if (msg.type === 'bot') {
                     textElement.innerHTML = markdownToHTML(msg.content);
                 } else {
                     textElement.textContent = msg.content;
                 }
 
+                contentWrapper.appendChild(textElement);
+
+                // Bot-specific elements
                 if (msg.type === 'bot') {
+                    // Copy button container
                     const copyContainer = document.createElement('div');
+                    copyContainer.style.display = 'flex';
+                    copyContainer.style.justifyContent = 'flex-start';
+                    copyContainer.style.marginTop = '8px';
+
                     const copyButton = document.createElement('button');
                     copyButton.className = 'copy-button';
                     copyButton.innerHTML = `
-            <svg viewBox="0 0 24 24">
-              <path d="M19 21H8V7h11m0-2H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2m-3-4H4a2 2 0 0 0-2 2v14h2V3h12V1z"/>
-            </svg>
-            <span>Copy</span>
-          `;
+                <svg viewBox="0 0 24 24">
+                    <path d="M19 21H8V7h11m0-2H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2m-3-4H4a2 2 0 0 0-2 2v14h2V3h12V1z"/>
+                </svg>
+                <span></span>
+            `;
+
                     const copyFeedback = document.createElement('span');
                     copyFeedback.className = 'copy-success';
                     copyFeedback.textContent = 'Copied!';
@@ -682,10 +686,9 @@
 
                     copyContainer.appendChild(copyButton);
                     copyContainer.appendChild(copyFeedback);
-                    contentWrapper.appendChild(textElement);
                     contentWrapper.appendChild(copyContainer);
-                    messageDiv.appendChild(contentWrapper);
 
+                    // Related questions
                     if (msg.relatedQuestions?.length > 0) {
                         const relatedQuestionsDiv = document.createElement('div');
                         relatedQuestionsDiv.className = 'related-questions';
@@ -700,9 +703,10 @@
                             };
                             relatedQuestionsDiv.appendChild(button);
                         });
-                        messageDiv.appendChild(relatedQuestionsDiv);
+                        contentWrapper.appendChild(relatedQuestionsDiv);
                     }
 
+                    // References
                     if (msg.references?.length > 0) {
                         const referencesSection = document.createElement('div');
                         referencesSection.className = 'references-section';
@@ -718,25 +722,27 @@
                                 const header = document.createElement('div');
                                 header.className = 'reference-header';
                                 header.innerHTML = `
-                  <div>
-                    <strong>${title}</strong><br>
-                    <small>Relevance: ${Math.round(chunk.relevanceScore * 100)}%</small>
-                  </div>
-                  <svg class="chevron-icon" viewBox="0 0 24 24">
-                    <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
-                  </svg>
-                `;
+                            <div>
+                                <strong>${title}</strong><br>
+                                <small>Relevance: ${Math.round(chunk.relevanceScore * 100)}%</small>
+                            </div>
+                            <svg class="chevron-icon" viewBox="0 0 24 24">
+                                <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+                            </svg>
+                        `;
+
                                 const content = document.createElement('div');
                                 content.className = 'reference-content';
                                 const truncatedContent = chunk.content.split(' ').slice(0, 40).join(' ') + '...';
                                 content.innerHTML = `
-                  <div class="chunk-info">
-                    ${truncatedContent}
-                  </div>
-                  <a href="${metadata.uri}" class="doc-link" target="_blank">
-                    View Source Document
-                  </a>
-                `;
+                            <div class="chunk-info">
+                                ${truncatedContent}
+                            </div>
+                            <a href="${metadata.uri}" class="doc-link" target="_blank">
+                                View Source Document
+                            </a>
+                        `;
+
                                 header.addEventListener('click', () => {
                                     content.classList.toggle('expanded');
                                     header.querySelector('.chevron-icon').classList.toggle('expanded');
@@ -748,12 +754,12 @@
                             }
                         });
                         if (referencesSection.children.length > 0) {
-                            messageDiv.appendChild(referencesSection);
+                            contentWrapper.appendChild(referencesSection);
                         }
                     }
-                } else {
-                    messageDiv.appendChild(textElement);
                 }
+
+                messageDiv.appendChild(contentWrapper);
                 chatMessages.appendChild(messageDiv);
             });
 
@@ -768,7 +774,6 @@
             } else {
                 inputContainer.classList.remove('initial');
             }
-            scrollToBottomBtn.classList.remove('visible');
         }
 
 
