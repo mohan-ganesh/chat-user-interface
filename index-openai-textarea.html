@@ -104,7 +104,7 @@
             padding: 20px;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 24px;
             margin-bottom: 80px;
             background-color: white;
         }
@@ -210,7 +210,26 @@
             background: #f1f3f4;
             color: #202124;
             align-self: flex-start;
-            padding-bottom: 16px;
+            padding-bottom: 12px;
+            line-height: 1.6;
+            /* Increased from 1.5 */
+            word-spacing: 0.5px;
+            letter-spacing: 0.2px;
+        }
+
+        /* For paragraph-like spacing in longer answers */
+        .bot-message div {
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        /* If you're rendering markdown content */
+        .bot-message strong {
+            letter-spacing: 0.3px;
+        }
+
+        .bot-message em {
+            letter-spacing: 0.1px;
         }
 
         button {
@@ -249,20 +268,45 @@
             margin-top: 8px;
         }
 
-        .copy-button {
-            margin-left: 0;
-            align-self: flex-start;
+        .copy-button,
+        .feedback-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            padding: 6px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #666;
+            transition: all 0.2s ease;
+            border-radius: 6px;
+        }
+
+        .copy-button:hover,
+        .feedback-button:hover {
+            background: rgba(0, 123, 255, 0.1);
+            color: #007bff;
+        }
+
+        .copy-button svg,
+        .feedback-button svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .copy-button:active {
+            transform: scale(0.95);
         }
 
         .copy-button:hover {
             background: rgba(25, 103, 210, 0.1);
+            color: #007bff;
+            transform: scale(1.1);
         }
 
-        .copy-button svg {
-            width: 14px;
-            height: 14px;
-            fill: currentColor;
-        }
+
 
         .copy-success {
             color: #0f9d58;
@@ -480,6 +524,30 @@
         .sign-in-btn {
             transition: all 0.7s ease;
         }
+
+        .feedback-buttons {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .feedback-button {
+            background: none;
+            border: none;
+            padding: 4px;
+            cursor: pointer;
+            color: #666;
+            transition: all 0.2s ease;
+        }
+
+        .feedback-button:hover {
+            color: #007bff;
+            transform: scale(1.1);
+        }
+
+        .feedback-button:active {
+            transform: scale(0.95);
+        }
     </style>
 </head>
 
@@ -619,6 +687,8 @@
             document.getElementById('newChatContainer').classList.remove('new-chat-visible');
         }
 
+        //begin of renderChat function
+
         function renderChat() {
             const chatMessages = document.getElementById('chatMessages');
             chatMessages.innerHTML = '';
@@ -656,19 +726,21 @@
 
                 // Bot-specific elements
                 if (msg.type === 'bot') {
-                    // Copy button container
-                    const copyContainer = document.createElement('div');
-                    copyContainer.style.display = 'flex';
-                    copyContainer.style.justifyContent = 'flex-start';
-                    copyContainer.style.marginTop = '8px';
+                    // Action buttons container
+                    const actionContainer = document.createElement('div');
+                    actionContainer.style.display = 'flex';
+                    actionContainer.style.gap = '12px';
+                    actionContainer.style.marginTop = '12px';
+                    actionContainer.style.alignItems = 'center';
 
+                    // Copy button
                     const copyButton = document.createElement('button');
                     copyButton.className = 'copy-button';
+                    copyButton.title = 'Copy';
                     copyButton.innerHTML = `
                 <svg viewBox="0 0 24 24">
-                    <path d="M19 21H8V7h11m0-2H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2m-3-4H4a2 2 0 0 0-2 2v14h2V3h12V1z"/>
+                    <path fill="currentColor" d="M19 21H8V7h11m0-2H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2m-3-4H4a2 2 0 0 0-2 2v14h2V3h12V1z"/>
                 </svg>
-                <span></span>
             `;
 
                     const copyFeedback = document.createElement('span');
@@ -677,16 +749,49 @@
 
                     copyButton.onclick = () => {
                         navigator.clipboard.writeText(msg.content).then(() => {
-                            copyContainer.classList.add('show-copy-feedback');
+                            copyButton.parentElement.classList.add('show-copy-feedback');
                             setTimeout(() => {
-                                copyContainer.classList.remove('show-copy-feedback');
+                                copyButton.parentElement.classList.remove('show-copy-feedback');
                             }, 2000);
                         });
                     };
 
-                    copyContainer.appendChild(copyButton);
-                    copyContainer.appendChild(copyFeedback);
-                    contentWrapper.appendChild(copyContainer);
+                    // Feedback buttons
+                    const thumbsUpButton = document.createElement('button');
+                    thumbsUpButton.className = 'feedback-button';
+                    thumbsUpButton.title = 'Like this response';
+                    thumbsUpButton.innerHTML = `
+                <svg viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M23 10a2 2 0 0 0-2-2h-6.32l.96-4.57c.02-.1.03-.21.03-.32c0-.41-.17-.79-.44-1.06L14.17 1L7.59 7.59C7.22 7.95 7 8.45 7 9v10a2 2 0 0 0 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73V10M1 21h4V9H1v12z"/>
+                </svg>
+            `;
+
+                    const thumbsDownButton = document.createElement('button');
+                    thumbsDownButton.className = 'feedback-button';
+                    thumbsDownButton.title = 'Dislike this response';
+                    thumbsDownButton.innerHTML = `
+    <svg viewBox="0 0 24 24">
+        <path fill="currentColor" d="M19 15h3v-3h-3V15zm-2 2H6.75l-.57-.45-3.46-2.74a1 1 0 0 1-.21-1.21l1.08-2.32a3 3 0 0 1 2.79-1.78H14V5a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-3v1.5a1.5 1.5 0 0 1-1.5 1.5 1.5 1.5 0 0 1-1.5-1.5V17zM5 13.5l1.5-2 1.5 2 1.5-2 1.5 2V12H5v1.5z"/>
+    </svg>
+`;
+
+                    // Event handlers
+                    thumbsUpButton.addEventListener('click', () => handleFeedback(msg, 'positive'));
+                    thumbsDownButton.addEventListener('click', () => handleFeedback(msg, 'negative'));
+
+                    // Assemble buttons
+                    const buttonGroup = document.createElement('div');
+                    buttonGroup.style.display = 'flex';
+                    buttonGroup.style.gap = '8px';
+                    buttonGroup.style.alignItems = 'center';
+
+                    buttonGroup.appendChild(copyButton);
+                    buttonGroup.appendChild(thumbsUpButton);
+                    buttonGroup.appendChild(thumbsDownButton);
+                    buttonGroup.appendChild(copyFeedback);
+
+                    actionContainer.appendChild(buttonGroup);
+                    contentWrapper.appendChild(actionContainer);
 
                     // Related questions
                     if (msg.relatedQuestions?.length > 0) {
@@ -775,7 +880,15 @@
                 inputContainer.classList.remove('initial');
             }
         }
+        //end of renderChat() function
 
+        // Add this feedback handler function
+        function handleFeedback(message, feedbackType) {
+            console.log('Feedback received:', feedbackType, 'for message:', {
+                content: message.content.substring(0, 50) + '...',
+                session: currentSession
+            });
+        }
 
 
         document.getElementById('userInput').addEventListener('keydown', (e) => {
