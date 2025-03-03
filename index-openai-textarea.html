@@ -294,6 +294,8 @@
         .feedback-button svg {
             width: 18px;
             height: 18px;
+            display: block;
+            margin: auto;
         }
 
         .copy-button:active {
@@ -548,6 +550,52 @@
         .feedback-button:active {
             transform: scale(0.95);
         }
+
+
+        .coming-soon-alert.feedback-alert {
+            bottom: 120px;
+            top: auto;
+            transform: translateX(-50%);
+            left: 50%;
+            background: rgba(0, 123, 255, 0.9);
+        }
+
+        .coming-soon-alert.feedback-alert.show {
+            transform: translate(-50%, -10px);
+        }
+
+        /* Add these styles to your CSS */
+        .button-tooltip {
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            z-index: 1000;
+        }
+
+        .button-tooltip::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -4px;
+            border-width: 4px;
+            border-style: solid;
+            border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
+        }
+
+        button:hover .button-tooltip {
+            opacity: 1;
+        }
     </style>
 </head>
 
@@ -741,6 +789,7 @@
                 <svg viewBox="0 0 24 24">
                     <path fill="currentColor" d="M19 21H8V7h11m0-2H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2m-3-4H4a2 2 0 0 0-2 2v14h2V3h12V1z"/>
                 </svg>
+                <span class="button-tooltip">Copy</span>
             `;
 
                     const copyFeedback = document.createElement('span');
@@ -764,6 +813,7 @@
                 <svg viewBox="0 0 24 24">
                     <path fill="currentColor" d="M23 10a2 2 0 0 0-2-2h-6.32l.96-4.57c.02-.1.03-.21.03-.32c0-.41-.17-.79-.44-1.06L14.17 1L7.59 7.59C7.22 7.95 7 8.45 7 9v10a2 2 0 0 0 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73V10M1 21h4V9H1v12z"/>
                 </svg>
+                <span class="button-tooltip">Like</span>
             `;
 
                     const thumbsDownButton = document.createElement('button');
@@ -771,8 +821,9 @@
                     thumbsDownButton.title = 'Dislike this response';
                     thumbsDownButton.innerHTML = `
     <svg viewBox="0 0 24 24">
-        <path fill="currentColor" d="M19 15h3v-3h-3V15zm-2 2H6.75l-.57-.45-3.46-2.74a1 1 0 0 1-.21-1.21l1.08-2.32a3 3 0 0 1 2.79-1.78H14V5a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-3v1.5a1.5 1.5 0 0 1-1.5 1.5 1.5 1.5 0 0 1-1.5-1.5V17zM5 13.5l1.5-2 1.5 2 1.5-2 1.5 2V12H5v1.5z"/>
+        <path fill="currentColor" d="M19 15h4V3h-4m-4 0H6.73c-.5 0-.92.37-.99.86L4.01 14.14c-.06.4.23.76.63.76H8v5l7-5h4c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/>
     </svg>
+    <span class="button-tooltip">Dislike</span>
 `;
 
                     // Event handlers
@@ -888,6 +939,26 @@
                 content: message.content.substring(0, 50) + '...',
                 session: currentSession
             });
+            console.log('Feedback received:', feedbackType);
+
+            // Show thank you message
+            const feedbackAlert = document.createElement('div');
+            feedbackAlert.className = 'coming-soon-alert feedback-alert';
+            feedbackAlert.textContent = 'Thank you for your feedback!';
+            document.body.appendChild(feedbackAlert);
+
+            // Show and animate
+            setTimeout(() => {
+                feedbackAlert.classList.add('show');
+
+                // Remove after animation
+                setTimeout(() => {
+                    feedbackAlert.classList.remove('show');
+                    setTimeout(() => {
+                        feedbackAlert.remove();
+                    }, 300);
+                }, 2000);
+            }, 10);
         }
 
 
