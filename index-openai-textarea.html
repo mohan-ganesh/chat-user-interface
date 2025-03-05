@@ -1087,25 +1087,167 @@
         document.querySelector('.sign-in-btn').addEventListener('click', function (e) {
             e.preventDefault();
 
-            // Create or reuse notification element
-            let alertDiv = document.querySelector('.coming-soon-alert');
-            if (!alertDiv) {
-                alertDiv = document.createElement('div');
-                alertDiv.className = 'coming-soon-alert';
-                alertDiv.textContent = 'Sign In feature coming soon!';
-                document.body.appendChild(alertDiv);
+            if (sessionStorage.getItem('accessToken')) {
+                // Already logged in
+                return;
             }
 
-            // Show notification
-            alertDiv.classList.add('show');
+            const state = generateRandomString(40);
+            const codeVerifier = generateRandomString(128);
 
-            // Hide after 2 seconds
-            setTimeout(() => {
-                alertDiv.classList.remove('show');
-            }, 2000);
+            sessionStorage.setItem('oidc_state', state);
+            sessionStorage.setItem('code_verifier', codeVerifier);
+
+            const authUrl = new URL(OIDC_CONFIG.authEndpoint);
+            authUrl.searchParams.append('client_id', OIDC_CONFIG.clientId);
+            authUrl.searchParams.append('response_type', 'code');
+            authUrl.searchParams.append('scope', OIDC_CONFIG.scope);
+            authUrl.searchParams.append('redirect_uri', OIDC_CONFIG.redirectUri);
+            authUrl.searchParams.append('state', state);
+            authUrl.searchParams.append('code_challenge', codeVerifier); // For production, use PKCE
+            alert(authUrl.toString());
+            window.location.href = authUrl.toString();
+
         });
         // Add this in your initialization code (e.g., at the end of the script)
         document.querySelector('.header-logo').src = `${getDomain()}/assets/engen-fullcolor-horizontal.png`;
+
+
+        //the signin-block
+
+        // Base64 encoded configuration
+
+        const config = {
+            clientId: 'YOUR_CLIENT_ID',
+            redirectUri: "http://localhost:4200",
+            authEndpoint: 'https://oauth.id.jumpcloud.com/oauth2/auth',
+            tokenEndpoint: 'https://oauth.id.jumpcloud.com/oauth2/token',
+            userInfoEndpoint: 'https://oauth.id.jumpcloud.com/userinfo',
+            scope: 'openid email profile',
+            clientSecret: 'YOUR_CLIENT_SECRET'
+        };
+
+        // Encode
+        const encoded = btoa(JSON.stringify(config));
+        console.log(encoded);
+        //encode block ends
+
+
+        const ENCODED_CONFIG = 'eyJjbGllbnRJZCI6IlhYWFhYWFhYLWFkMjctNGIyNS1hZDkxLWRjNGY4MjQ1Y2NmOSIsInJlZGlyZWN0VXJpIjoiaHR0cDovL2xvY2FsaG9zdDo0MjAwIiwiYXV0aEVuZHBvaW50IjoiaHR0cHM6Ly9vYXV0aC5pZC5qdW1wY2xvdWQuY29tL29hdXRoMi9hdXRoIiwidG9rZW5FbmRwb2ludCI6Imh0dHBzOi8vb2F1dGguaWQuanVtcGNsb3VkLmNvbS9vYXV0aDIvdG9rZW4iLCJ1c2VySW5mb0VuZHBvaW50IjoiaHR0cHM6Ly9vYXV0aC5pZC5qdW1wY2xvdWQuY29tL3VzZXJpbmZvIiwic2NvcGUiOiJvcGVuaWQgZW1haWwgcHJvZmlsZSIsImNsaWVudFNlY3JldCI6IlhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFgifQ==';
+
+        const OIDC_CONFIG = JSON.parse(atob(ENCODED_CONFIG));
+
+        function updateUIAfterLogin(userInfo) {
+            const headerRight = document.querySelector('.header-right');
+            headerRight.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <span style="font-weight: 500;">${userInfo.name || userInfo.email}</span>
+            <button class="sign-in-btn" onclick="handleSignOut()">Sign Out</button>
+        </div>
+    `;
+        }
+
+        function handleSignOut() {
+            sessionStorage.removeItem('accessToken');
+            sessionStorage.removeItem('userInfo');
+            sessionStorage.removeItem('oidc_state');
+            sessionStorage.removeItem('code_verifier');
+            window.location.reload();
+        }
+        // Add OIDC callback handler
+        async function handleOidcCallback() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            const state = urlParams.get('state');
+            const error = urlParams.get('error');
+
+            if (error) {
+                console.error('OIDC Error:', error, urlParams.get('error_description'));
+                return;
+            }
+
+            if (code && state) {
+                const savedState = sessionStorage.getItem('oidc_state');
+                if (state !== savedState) {
+                    console.error('Invalid state parameter');
+                    return;
+                }
+
+                const tokenResponse = await exchangeCodeForToken(code);
+                if (tokenResponse && tokenResponse.access_token) {
+                    sessionStorage.setItem('accessToken', tokenResponse.access_token);
+
+                    const userInfo = await getUserInfo(tokenResponse.access_token);
+                    if (userInfo) {
+                        sessionStorage.setItem('userInfo', JSON.stringify(userInfo));
+                        updateUIAfterLogin(userInfo);
+                    }
+                }
+
+                // Cleanup URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        }
+
+        // Add these utility functions
+        function generateRandomString(length) {
+            const array = new Uint32Array(length);
+            window.crypto.getRandomValues(array);
+            return Array.from(array, dec => ('0' + dec.toString(16)).slice(-2)).join('').substring(0, length);
+        }
+
+        async function exchangeCodeForToken(code) {
+            const codeVerifier = sessionStorage.getItem('code_verifier');
+
+            const params = new URLSearchParams();
+            params.append('client_id', OIDC_CONFIG.clientId);
+            params.append('client_secret', OIDC_CONFIG.clientSecret);
+            params.append('code', code);
+            params.append('grant_type', 'authorization_code');
+            params.append('redirect_uri', OIDC_CONFIG.redirectUri);
+            params.append('code_verifier', codeVerifier);
+
+            try {
+                const response = await fetch(OIDC_CONFIG.tokenEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: params
+                });
+
+                if (!response.ok) throw new Error('Token exchange failed');
+                return await response.json();
+            } catch (error) {
+                console.error('Token exchange error:', error);
+                return null;
+            }
+        }
+
+        async function getUserInfo(accessToken) {
+            try {
+                const response = await fetch(OIDC_CONFIG.userInfoEndpoint, {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`
+                    }
+                });
+                return await response.json();
+            } catch (error) {
+                console.error('User info error:', error);
+                return null;
+            }
+        }
+
+        // Add this to DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', function () {
+            const userInfo = sessionStorage.getItem('userInfo');
+            if (userInfo) {
+                updateUIAfterLogin(JSON.parse(userInfo));
+            }
+
+            handleOidcCallback(); // Check for OIDC callback
+        });
+        //sign-in block ends
 
         renderChat();
 
