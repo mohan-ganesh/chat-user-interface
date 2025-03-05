@@ -125,7 +125,7 @@
         /* Initial centered state */
         .input-container.initial {
             position: absolute;
-            top: 50%;
+            top: 60%;
             left: 50%;
             transform: translate(-50%, -50%);
             bottom: auto;
@@ -596,6 +596,63 @@
         button:hover .button-tooltip {
             opacity: 1;
         }
+
+        /* Add these new styles to existing CSS */
+        .validation-message {
+            background: #fff3cd !important;
+            border-left: 4px solid #ffc107;
+            padding: 16px;
+            margin: 12px 0;
+            border-radius: 8px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .validation-icon {
+            font-size: 1.2em;
+            margin-right: 8px;
+        }
+
+        .validation-text {
+            flex: 1;
+        }
+
+        .validation-message strong {
+            color: #856404;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .welcome-message {
+            position: fixed;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -60%);
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #2d3748;
+            opacity: 1;
+            transition: all 0.3s ease;
+            text-align: center;
+            pointer-events: none;
+            z-index: 2000;
+            display: none;
+            /* Start hidden */
+        }
+
+        .welcome-message.show {
+            display: block;
+            /* Show only when needed */
+            opacity: 1;
+        }
+
+        .welcome-message.hidden {
+            opacity: 0;
+            transform: translate(-50%, -40%);
+            display: none !important;
+            /* Force hide */
+        }
     </style>
 </head>
 
@@ -625,8 +682,10 @@
             <span></span>
             <span></span>
         </div>
-        <button class="new-chat-btn" onclick="clearSessionAndChat()">Ask new question</button>
+        <button class="new-chat-btn" onclick="clearSessionAndChat()">ask new question</button>
     </div>
+
+    <div class="welcome-message" id="welcomeMessage">Hey Guest</div>
 
     <div class="input-container initial">
         <div class="input-wrapper">
@@ -644,12 +703,20 @@
     </footer>
 
     <script>
+        // Add these constants at the top with other declarations
+        const SHORT_MESSAGES = ['hey', 'hello', 'hi', 'hola', 'hey there', 'hi there'];
+        const VALIDATION_RESPONSE = {
+            type: 'bot',
+            validation: true,
+            content: "🌟 **Hello!**\nI'd be happy to help! Could you please elaborate on your question so I can provide the most helpful response?"
+        };
         function getDomain() {
             return atob("aHR0cHM6Ly90ZXN0LmNvbnZlcnNhdGlvbi5nb2VuZ2VuLmNvbQ==");
         }
         const DOMAIN = atob("aHR0cHM6Ly90ZXN0LmNvbnZlcnNhdGlvbi5nb2VuZ2VuLmNvbQ==");
         let messages = [];
         let currentSession = sessionStorage.getItem('chatSession') || null;
+        let isFirstInteraction = true; // New state variable
 
         // Simple markdown-to-HTML conversion for basic formatting
         function markdownToHTML(markdown) {
@@ -663,9 +730,27 @@
         }
 
         async function handleSendMessage() {
+
+
             const userInput = document.getElementById('userInput');
             const userMessage = userInput.value.trim();
             if (!userMessage) return;
+
+            // Clear placeholder after first interaction
+            if (isFirstInteraction) {
+                userInput.placeholder = '';
+                isFirstInteraction = false;
+            }
+
+            // Check for short messages
+            if (SHORT_MESSAGES.includes(userMessage)) {
+                messages.push({ type: 'user', content: userInput.value.trim() });
+                messages.push(VALIDATION_RESPONSE);
+                renderChat();
+                userInput.value = '';
+                return;
+            }
+
 
             messages.push({ type: 'user', content: userMessage });
             renderChat();
@@ -731,6 +816,9 @@
             sessionStorage.removeItem('chatSession');
             currentSession = null;
             messages = [];
+            isFirstInteraction = true; // Reset the flag
+            document.getElementById('userInput').placeholder = 'Type your message...';
+
             renderChat();
             document.getElementById('newChatContainer').classList.remove('new-chat-visible');
         }
@@ -751,6 +839,18 @@
             messages.forEach(msg => {
                 const messageDiv = document.createElement('div');
                 messageDiv.className = `message ${msg.type}-message`;
+
+                // For validation messages
+                if (msg.validation) {
+                    messageDiv.innerHTML = `
+                        <div class="validation-text">
+                            <strong>Let's dive deeper!</strong>
+                            ${markdownToHTML(msg.content)}
+                        </div>
+                    `;
+                    chatMessages.appendChild(messageDiv);
+                    return;
+                }
 
                 // Main content container
                 const contentWrapper = document.createElement('div');
@@ -1006,7 +1106,12 @@
         });
         // Add this in your initialization code (e.g., at the end of the script)
         document.querySelector('.header-logo').src = `${getDomain()}/assets/engen-fullcolor-horizontal.png`;
+
         renderChat();
+
+
+
+
     </script>
 
 </body>
