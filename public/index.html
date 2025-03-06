@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chat Assistant</title>
+    <link rel="stylesheet" href="styles/main.css">
+</head>
+
+<body>
+    <header>
+
+        <div class="header-content">
+            <div class="header-left">
+                <img src="" alt="Engen Logo" class="header-logo" />
+            </div>
+            <div class="header-center">
+                <h2 class="header-title">Knowledge Management</h2>
+            </div>
+            <div class="header-right">
+                <button class="sign-in-btn">Sign In</button>
+            </div>
+        </div>
+
+    </header>
+
+    <div class="chat-container">
+        <div class="chat-messages" id="chatMessages"></div>
+    </div>
+
+    <div class="new-chat-container" id="newChatContainer">
+        <div class="loading-dots" id="loadingDots" style="display: none;">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        <button class="new-chat-btn">ask new question</button>
+    </div>
+
+    <div class="welcome-message" id="welcomeMessage">Hey Guest</div>
+
+    <div class="input-container initial">
+        <div class="input-wrapper">
+            <textarea id="userInput" rows="2" class="message-input" placeholder="Type your message..."></textarea>
+            <button class="send-button">Send</button>
+        </div>
+    </div>
+
+    <div class="scroll-to-bottom-btn" id="scrollToBottomBtn" title="Jump to latest message">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+            <path fill="currentColor" d="M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z" />
+        </svg>
+    </div>
+
+    <footer>
+        <p>© 2024 Chat Interface. All rights reserved.</p>
+    </footer>
+
+    <script type="module" src="scripts/main.js"></script>
+</body>
+
+</html>

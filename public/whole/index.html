@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Assistant</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: white;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding-bottom: 120px;
+        }
+
+        header {
+            background: #ffffff;
+            padding: 12px 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 95%;
+            margin: 0 auto;
+        }
+
+        .header-left {
+            flex: 1;
+            display: flex;
+            align-items: center;
+        }
+
+        .header-logo {
+            height: 40px;
+            object-fit: contain;
+            margin-right: 20px;
+        }
+
+        .header-center {
+            flex: 2;
+            text-align: center;
+        }
+
+        .header-title {
+            color: #2d3748;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .header-right {
+            flex: 1;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .sign-in-btn {
+            background: transparent;
+            border: 2px solid #007bff;
+            color: #007bff;
+            padding: 8px 24px;
+            border-radius: 24px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .sign-in-btn:hover {
+            background: #007bff;
+            color: white;
+        }
+
+        .sign-in-btn:active {
+            transform: scale(0.98);
+        }
+
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-color: white;
+            padding: 20px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-bottom: 60px;
+            background-color: white;
+
+        }
+
+        .input-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 16px;
+            border-top: 0px solid white;
+            box-shadow: 0 0px 0px rgba(0, 0, 0, 0);
+            z-index: 100;
+            bottom: 60px;
+        }
+
+        .input-wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            gap: 10px;
+        }
+
+        footer {
+            background: white;
+            padding: 16px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #666;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 90;
+            /* Below input container */
+
+            padding: 12px;
+            text-align: center;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            margin: 4px 0;
+        }
+
+        .user-message {
+            background: #eff6ff;
+            color: black;
+            align-self: flex-end;
+        }
+
+        .bot-message {
+            background: #f1f3f4;
+            color: #202124;
+            align-self: flex-start;
+        }
+
+        input {
+            flex-grow: 3;
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 24px;
+            outline: none;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 12px 24px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 24px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .related-questions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .related-question-btn {
+            background: #e8f0fe;
+            color: #1967d2;
+            border: none;
+            border-radius: 16px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .copy-button {
+            background: none;
+            border: none;
+            color: #1967d2;
+            cursor: pointer;
+            padding: 4px 8px;
+            margin-left: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.9em;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .copy-button:hover {
+            background: rgba(25, 103, 210, 0.1);
+        }
+
+        .copy-button svg {
+            width: 14px;
+            height: 14px;
+            fill: currentColor;
+        }
+
+        .copy-success {
+            color: #0f9d58;
+            font-size: 0.8em;
+            margin-left: 8px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .show-copy-feedback .copy-success {
+            opacity: 1;
+        }
+
+        .references-section {
+            margin-top: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .reference-header {
+            background-color: #f8f9fa;
+            padding: 10px 15px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.2s;
+        }
+
+        .reference-header:hover {
+            background-color: #f1f3f4;
+        }
+
+        .reference-content {
+            padding: 0 15px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .reference-content.expanded {
+            padding: 15px;
+            max-height: 500px;
+        }
+
+        .chevron-icon {
+            width: 16px;
+            height: 16px;
+            transition: transform 0.3s;
+        }
+
+        .chevron-icon.expanded {
+            transform: rotate(180deg);
+        }
+
+        .chunk-info {
+            font-size: 0.9em;
+            color: #5f6368;
+            margin-bottom: 10px;
+        }
+
+        .doc-link {
+            color: #1967d2;
+            text-decoration: none;
+            font-size: 0.9em;
+            display: inline-block;
+            margin-top: 8px;
+        }
+
+        .doc-link:hover {
+            text-decoration: underline;
+        }
+
+        .message-input {
+            flex-grow: 1;
+            padding: 12px 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 24px;
+            outline: none;
+            font-size: 16px;
+            resize: none;
+            line-height: 1.5;
+            min-height: 56px;
+            max-height: 150px;
+            overflow-y: auto;
+            transition: all 0.2s;
+        }
+
+        .message-input:focus {
+            border-color: #eceff2;
+            box-shadow: 0 0 0 3px rgba(183, 200, 219, 0.1);
+        }
+
+        .input-wrapper {
+            align-items: flex-end;
+        }
+
+        button {
+            margin-bottom: 8px;
+            height: 40px;
+        }
+
+        .new-chat-container {
+            position: fixed;
+            bottom: 140px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            z-index: 99;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .new-chat-visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .new-chat-btn {
+            background: #ffffff;
+            color: #007bff;
+            border: 1px solid #e0e0e0;
+            padding: 8px 24px;
+            border-radius: 20px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        .new-chat-btn:hover {
+            background: #f8f9fa;
+            border-color: #007bff;
+            box-shadow: 0 2px 12px rgba(0, 123, 255, 0.15);
+        }
+
+        .new-chat-btn:active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="header-content">
+            <div class="header-left">
+                <img src="https://test.conversation.goengen.com/assets/engen-fullcolor-horizontal.png" alt="Engen Logo"
+                    class="header-logo">
+            </div>
+            <div class="header-center">
+                <h2 class="header-title">Knowledge Management</h2>
+            </div>
+            <div class="header-right">
+                <button class="sign-in-btn">Sign In</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="chat-container">
+        <div class="chat-messages" id="chatMessages"></div>
+    </div>
+
+    <div class="new-chat-container" id="newChatContainer">
+        <button class="new-chat-btn" onclick="clearSessionAndChat()">Ask new question</button>
+    </div>
+
+    <div class="input-container">
+        <div class="input-wrapper">
+            <input type="textarea" rows="3" id="userInput" class="message-input" placeholder="Type your message...">
+            <button onclick=" handleSendMessage()">Send</button>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2024 Chat Interface. All rights reserved.</p>
+    </footer>
+
+    <script>
+        let messages = [];
+        let currentSession = sessionStorage.getItem('chatSession') || null;
+
+        async function handleSendMessage() {
+            const userInput = document.getElementById('userInput');
+            const userMessage = userInput.value.trim();
+            if (!userMessage) return;
+
+            messages.push({ type: 'user', content: userMessage });
+            renderChat();
+            userInput.value = '';
+
+            try {
+                const requestBody = {
+                    query: userMessage,
+                    ...(currentSession && { session: currentSession })
+                };
+                console.log(requestBody);
+                const response = await fetch(
+                    'https://test.conversation.goengen.com/code-translate/v1alpha/data-discovery/prompt',
+                    {
+                        method: 'POST',
+                        headers: {
+                            'accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(requestBody)
+                    }
+                );
+
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+                const data = await response.json();
+
+                // Update session if received in response
+                if (data.session?.name) {
+                    console.log('Session:', data.session.name);
+                    currentSession = data.session.name;
+                    sessionStorage.setItem('chatSession', currentSession);
+                }
+
+
+                messages.push({
+                    type: 'bot',
+                    content: data.answer.answerText,
+                    relatedQuestions: data.answer.relatedQuestions,
+                    references: data.answer.references || []
+                });
+
+                // After successful response
+                if (messages.length === 1) { // First message
+                    document.getElementById('newChatContainer').classList.add('new-chat-visible');
+                }
+
+                renderChat();
+            } catch (error) {
+                console.error('API Error:', error);
+                messages.push({
+                    type: 'bot',
+                    content: 'Sorry, there was an error processing your request.',
+                    references: []
+                });
+                renderChat();
+            }
+        }
+
+        function clearSessionAndChat() {
+            // Clear session storage
+            sessionStorage.removeItem('chatSession');
+            currentSession = null;
+
+            // Clear messages
+            messages = [];
+
+            // Re-render chat
+            renderChat();
+
+            // Hide the button after clearing
+            document.getElementById('newChatContainer').classList.remove('new-chat-visible');
+        }
+
+        function renderChat() {
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.innerHTML = '';
+
+            // Show/hide new chat button based on messages
+            const newChatContainer = document.getElementById('newChatContainer');
+            if (messages.length > 0) {
+                newChatContainer.classList.add('new-chat-visible');
+            } else {
+                newChatContainer.classList.remove('new-chat-visible');
+            }
+
+            messages.forEach(msg => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${msg.type}-message`;
+
+                const contentWrapper = document.createElement('div');
+                contentWrapper.style.display = 'flex';
+                contentWrapper.style.alignItems = 'center';
+                contentWrapper.style.justifyContent = 'space-between';
+
+                const textElement = document.createElement('div');
+                textElement.textContent = msg.content;
+
+                if (msg.type === 'bot') {
+                    // Copy button
+                    const copyContainer = document.createElement('div');
+                    const copyButton = document.createElement('button');
+                    copyButton.className = 'copy-button';
+                    copyButton.innerHTML = `
+                        <svg viewBox="0 0 24 24">
+                            <path d="M19 21H8V7h11m0-2H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2m-3-4H4a2 2 0 0 0-2 2v14h2V3h12V1z"/>
+                        </svg>
+                        <span>Copy</span>
+                    `;
+
+                    const copyFeedback = document.createElement('span');
+                    copyFeedback.className = 'copy-success';
+                    copyFeedback.textContent = 'Copied!';
+
+                    copyButton.onclick = () => {
+                        navigator.clipboard.writeText(msg.content)
+                            .then(() => {
+                                copyContainer.classList.add('show-copy-feedback');
+                                setTimeout(() => {
+                                    copyContainer.classList.remove('show-copy-feedback');
+                                }, 2000);
+                            });
+                    };
+
+                    copyContainer.appendChild(copyButton);
+                    copyContainer.appendChild(copyFeedback);
+                    contentWrapper.appendChild(textElement);
+                    contentWrapper.appendChild(copyContainer);
+                    messageDiv.appendChild(contentWrapper);
+
+                    // Related questions
+                    if (msg.relatedQuestions?.length > 0) {
+                        const relatedQuestionsDiv = document.createElement('div');
+                        relatedQuestionsDiv.className = 'related-questions';
+
+                        msg.relatedQuestions.forEach(question => {
+                            const button = document.createElement('button');
+                            button.className = 'related-question-btn';
+                            button.textContent = question;
+                            button.onclick = () => {
+                                document.getElementById('userInput').value = question;
+                                handleSendMessage();
+                            };
+                            relatedQuestionsDiv.appendChild(button);
+                        });
+                        messageDiv.appendChild(relatedQuestionsDiv);
+                    }
+
+                    // References
+                    if (msg.references?.length > 0) {
+
+                        const referencesSection = document.createElement('div');
+                        referencesSection.className = 'references-section';
+                        msg.references.forEach((reference, index) => {
+
+                            if (reference.chunkInfo.relevanceScore >= 0.5) {
+                                const referenceDiv = document.createElement('div');
+                                const chunk = reference.chunkInfo;
+                                const metadata = chunk.documentMetadata;
+
+                                // Extract filename from URI if title is missing
+                                const title = metadata.title === 'untitled'
+                                    ? metadata.uri.split('/').pop()
+                                    : metadata.title;
+
+                                // Header
+                                const header = document.createElement('div');
+                                header.className = 'reference-header';
+                                header.innerHTML = `
+                    <div>
+                        <strong>${title}</strong><br>
+                        <small>Relevance: ${Math.round(chunk.relevanceScore * 100)}%</small>
+                    </div>
+                    <svg class="chevron-icon" viewBox="0 0 24 24">
+                        <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+                    </svg>
+                `;
+                                // Content
+                                const content = document.createElement('div');
+                                content.className = 'reference-content';
+
+                                // Truncate content to ~40 words
+                                const truncatedContent = chunk.content.split(' ').slice(0, 40).join(' ') + '...';
+
+                                content.innerHTML = `
+                    <div class="chunk-info">
+                        ${truncatedContent}
+                    </div>
+                    <a href="${metadata.uri}" class="doc-link" target="_blank">
+                        View Source Document
+                    </a>
+                `;
+                                // Toggle functionality
+                                header.addEventListener('click', () => {
+                                    content.classList.toggle('expanded');
+                                    header.querySelector('.chevron-icon').classList.toggle('expanded');
+                                });
+
+                                referenceDiv.appendChild(header);
+                                referenceDiv.appendChild(content);
+                                referencesSection.appendChild(referenceDiv);
+                            }
+
+                        });
+                        if (referencesSection.children.length > 0) {
+                            messageDiv.appendChild(referencesSection);
+                        }
+
+                    }
+                } else {
+                    messageDiv.appendChild(textElement);
+                }
+
+                chatMessages.appendChild(messageDiv);
+            });
+
+            chatMessages.scrollTo({
+                top: chatMessages.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
+
+
+        document.getElementById('userInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSendMessage();
+            }
+        });
+
+        // Initial render
+        renderChat();
+    </script>
+</body>
+
+</html>
