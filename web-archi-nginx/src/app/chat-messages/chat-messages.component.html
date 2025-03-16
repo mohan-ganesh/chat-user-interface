@@ -1,0 +1,53 @@
+<div class="chat-container">
+    <div class="chat-messages" #chatMessages (scroll)="onScroll()">
+        <div *ngFor="let message of messages; trackBy: trackByMessage" class="message"
+            [class.user-message]="message.type === 'user'" [class.bot-message]="message.type === 'bot'"
+            [class.validation-message]="message.validation">
+
+            <div class="content-wrapper">
+                <div class="message-content" [innerHTML]="message.content"></div>
+
+                <div *ngIf="message.type === 'bot'" class="action-container">
+                    <div class="button-group">
+                        <button class="copy-button" (click)="copyContent(message.content)" title="Copy">
+                            <svg viewBox="0 0 24 24" width="18" height="18">
+                                <path fill="currentColor"
+                                    d="M19 21H8V7h11m0-2H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2m-3-4H4a2 2 0 0 0-2 2v14h2V3h12V1z" />
+                            </svg>
+                        </button>
+
+                        <button class="feedback-button" (click)="handleFeedback(message, 'positive')" title="Like">
+                            <svg width="24" height="24" viewBox="0 0 24 24">
+                                <path fill="currentColor" d="M7..." />
+                            </svg>
+                        </button>
+
+                        <button class="feedback-button" (click)="handleFeedback(message, 'negative')" title="Dislike">
+                            <svg width="24" height="24" viewBox="0 0 24 24">
+                                <path fill="currentColor" d="M17..." />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div *ngIf="message.relatedQuestions?.length" class="related-questions">
+                        <button *ngFor="let question of message.relatedQuestions" class="related-question-btn"
+                            (click)="sendQuestion.emit(question)">
+                            {{ question }}
+                        </button>
+                    </div>
+
+                    <div *ngIf="message.references?.length" class="references-section">
+                        <!-- Reference items implementation -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button *ngIf="showScrollButton" class="scroll-to-bottom-btn" (click)="jumpToBottom()"
+        title="Jump to latest message">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+            <path fill="currentColor" d="M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z" />
+        </svg>
+    </button>
+</div>

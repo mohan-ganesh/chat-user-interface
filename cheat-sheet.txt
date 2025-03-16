@@ -1,0 +1,5 @@
+DTS uses Document Processing Keys (DPK) for several capabilities.
+
+*   **Report/Archival Management**: Requires Document Processing Key (DPK).
+*   **Document Management**: Requires Document Processing Key (DPK).
+*   **Forms OCR**: Requires Document Processing Keys (DPKs) to be created.
