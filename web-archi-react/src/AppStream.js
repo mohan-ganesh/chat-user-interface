@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { debounce } from "lodash";
-import "./App.css";
+import "./styles/AppStream.css";
+import logo from "./assets/logo.png";
 
 const SHORT_MESSAGES = ["hey", "hello", "hi", "hola", "hey there", "hi there"];
 const VALIDATION_RESPONSE = {
@@ -32,7 +33,7 @@ function App() {
   const advancedScrollToBottom = useCallback(
     debounce((behavior = "smooth") => {
       messagesEndRef.current?.scrollIntoView({
-        behavior,
+        behavior: "smooth",
         block: "nearest",
         inline: "start",
       });
@@ -133,7 +134,9 @@ function App() {
 
   const getUserInfo = async (token) => {
     const response = await fetch(OIDC_CONFIG.userInfoEndpoint, {
-      headers: { Authorization: "Some token" },
+      headers: {
+        Authorization: "Bearer",
+      },
     });
     return await response.json();
   };
@@ -147,19 +150,21 @@ function App() {
     let currentContent = "";
 
     try {
+      // Add user message immediately
       setMessages((prev) => [...prev, { type: "user", content: userMessage }]);
       setInput("");
       setIsLoading(true);
 
+      // Simulated API call
       const response = await fetch(
-        `${DOMAIN}/code-translate/v1alpha/data-discovery/prompt`,
+        `${DOMAIN}/discover/v1alpha/data-discovery/prompt`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: userInfo
               ? `Bearer ${sessionStorage.getItem("accessToken")}`
-              : "some token",
+              : "Bearer ",
           },
           body: JSON.stringify({
             query: userMessage,
@@ -170,6 +175,8 @@ function App() {
       );
 
       const data = await response.json();
+
+      // Add initial bot message
       setMessages((prev) => [
         ...prev,
         {
@@ -181,15 +188,33 @@ function App() {
         },
       ]);
 
-      const CHUNK_SIZE = 50;
-      const CHUNK_DELAY = 300;
       const fullResponse = data.answer.answerText;
-      const chunkCount = Math.ceil(fullResponse.length / CHUNK_SIZE);
+      const baseSpeed = 10; // 40 characters per second
+      let CHUNK_SIZE = Math.floor(
+        Math.min(Math.max(fullResponse.length * 0.05, 5), 80)
+      );
 
-      for (let i = 0; i < chunkCount; i++) {
-        if (controller.signal.aborted) break;
-        currentContent = fullResponse.substring(0, (i + 1) * CHUNK_SIZE);
-        await new Promise((resolve) => setTimeout(resolve, CHUNK_DELAY));
+      let CHUNK_DELAY = Math.floor((100 / baseSpeed) * CHUNK_SIZE);
+
+      // Adjust for very long responses
+      if (fullResponse.length > 1000) {
+        CHUNK_SIZE = Math.min(80, Math.floor(fullResponse.length * 0.03));
+        CHUNK_DELAY = 50;
+      }
+
+      console.log(`Streaming ${CHUNK_SIZE} chars every ${CHUNK_DELAY}ms`);
+
+      const streamChunk = async (index = 0) => {
+        if (controller.signal.aborted) return;
+
+        // Dynamic chunk sizing for final portion
+        const remaining = fullResponse.length - index;
+        let dynamicChunkSize = CHUNK_SIZE;
+        if (remaining < 100) {
+          dynamicChunkSize = Math.max(2, Math.floor(remaining * 0.3));
+        }
+
+        currentContent = fullResponse.substring(0, index + dynamicChunkSize);
 
         setMessages((prev) => {
           const lastMessage = prev[prev.length - 1];
@@ -198,40 +223,45 @@ function App() {
             { ...lastMessage, content: currentContent },
           ];
         });
-      }
 
-      if (controller.signal.aborted) {
+        const newIndex = index + dynamicChunkSize;
+        if (newIndex < fullResponse.length) {
+          // Dynamic speed adjustment
+          let delay = CHUNK_DELAY;
+          if (remaining < 200) {
+            delay = Math.max(20, delay * 0.7);
+          }
+
+          // Add natural typing variation
+          delay *= 1 - 0.2 + Math.random() * 0.4;
+
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          await streamChunk(newIndex);
+        }
+      };
+
+      await streamChunk(0);
+
+      // Finalize successful response
+      if (!controller.signal.aborted) {
         setMessages((prev) => {
           const lastMessage = prev[prev.length - 1];
           return [
             ...prev.slice(0, -1),
             {
               ...lastMessage,
-              content: `${currentContent}\n\n**Stopped by user**`,
+              content: fullResponse,
               isStreaming: false,
+              relatedQuestions: data.answer.relatedQuestions || [],
+              references: data.answer.references || [],
             },
           ];
         });
-        return;
-      }
 
-      setMessages((prev) => {
-        const lastMessage = prev[prev.length - 1];
-        return [
-          ...prev.slice(0, -1),
-          {
-            ...lastMessage,
-            content: fullResponse,
-            isStreaming: false,
-            relatedQuestions: data.answer.relatedQuestions || [],
-            references: data.answer.references || [],
-          },
-        ];
-      });
-
-      if (data.session?.name) {
-        setSession(data.session.name);
-        sessionStorage.setItem("chatSession", data.session.name);
+        if (data.session?.name) {
+          setSession(data.session.name);
+          sessionStorage.setItem("chatSession", data.session.name);
+        }
       }
     } catch (error) {
       if (error.name === "AbortError") {
@@ -271,6 +301,17 @@ function App() {
 
   return (
     <div className="app">
+      <header>
+        <div className="header-content">
+          <div className="header-left">
+            <img src={logo} alt="Logo" className="header-logo" />
+          </div>
+          <div className="header-center">
+            <h2 className="header-title"> discover</h2>
+          </div>
+          <div className="header-right">User name</div>
+        </div>
+      </header>
       <div className="chat-container">
         <div className="chat-messages" ref={chatMessagesRef}>
           {messages.map((msg, i) => (
@@ -442,7 +483,7 @@ const References = ({ references }) => {
         className="section-header"
         onClick={() => setIsSectionExpanded(!isSectionExpanded)}
       >
-        <h4>References ({filteredRefs.length})</h4>
+        References ({filteredRefs.length})
         <svg
           className={`section-chevron ${isSectionExpanded ? "expanded" : ""}`}
           viewBox="0 0 24 24"
@@ -467,7 +508,7 @@ const References = ({ references }) => {
                 }}
               >
                 <div className="header-text">
-                  <strong>{metadata.title}</strong>
+                  <small>{metadata.title}&nbsp;</small>
                   <small>
                     Relevance: {Math.round(ref.chunkInfo.relevanceScore * 100)}%
                   </small>
